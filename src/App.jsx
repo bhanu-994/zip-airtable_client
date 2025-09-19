@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 
 function App() {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
   const [masterData, setMasterData] = useState(null);
   const [workData, setWorkData] = useState(null);
   const [zipData, setZipData] = useState(null);
@@ -36,7 +38,7 @@ function App() {
 
    useEffect(() => {
     // file1 -> masterData
-    fetch("http://localhost:5000/api/file1")
+    fetch(`${backendUrl}/file1`)
       .then(res => res.text())
       .then(csv => {
         const parsed = parseCSV(csv); // using your existing parser
@@ -44,7 +46,7 @@ function App() {
       });
 
     // file2 -> zipData
-    fetch("http://localhost:5000/api/file2")
+    fetch(`${backendUrl}/file2`)
       .then(res => res.text())
       .then(csv => {
         const parsed = parseCSV(csv);
