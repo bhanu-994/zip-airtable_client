@@ -79,7 +79,7 @@ function App() {
   const pickAvailableZip = (zipRows) => {
     for (let zipEntry of zipRows) {
       const population = parseInt(zipEntry.population || "0", 10);
-      if (population < 30000) {
+      if (population > 30000) {
         zipEntry.population = (population + 1).toString();
         return zipEntry.zip;
       }
