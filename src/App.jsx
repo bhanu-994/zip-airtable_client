@@ -75,7 +75,7 @@ function App() {
     reader.readAsText(file);
   };
 
-  // Pick first available ZIP < 30000 population
+  // Pick first available ZIP > 30000 population
   const pickAvailableZip = (zipRows) => {
     for (let zipEntry of zipRows) {
       const population = parseInt(zipEntry.population || "0", 10);
