@@ -122,7 +122,7 @@ function App() {
     const updatedMasterRows = mergedRows.map(row => {
       if (row._modified) {
         const newZip = pickAvailableZip(updatedZipRows);
-        return { ...row, zip: newZip };
+        return { ...row, cus_zip: newZip };
       }
       return row;
     });
@@ -131,7 +131,7 @@ function App() {
     const finalMasterRows = updatedMasterRows.map(({ _modified, ...rest }) => rest);
 
     // Build updated Master CSV (icc, cus_name, mdn, zip)
-    const masterHeaders = ["icc", "cus_name", "mdn", "zip"];
+    const masterHeaders = ["icc", "cus_name", "mdn", "cus_zip"];
     const updatedMasterContent = buildCSV(masterHeaders, finalMasterRows, ",");
     setUpdatedMasterCSV(updatedMasterContent);
 
