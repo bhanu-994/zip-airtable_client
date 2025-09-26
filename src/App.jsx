@@ -15,7 +15,7 @@ import {
 
 function App() {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
+  const zip_limit = import.meta.env.VITE_ZIP_LIMIT || 100; // default limit if not set
   const [masterData, setMasterData] = useState(null);
   const [workData, setWorkData] = useState(null);
   const [zipData, setZipData] = useState(null);
@@ -76,16 +76,32 @@ function App() {
   };
 
   // Pick first available ZIP > 30000 population
-  const pickAvailableZip = (zipRows) => {
-    for (let zipEntry of zipRows) {
-      const population = parseInt(zipEntry.population || "0", 10);
-      if (population > 30000) {
-        zipEntry.population = (population + 1).toString();
-        return zipEntry.zip;
-      }
+// Pick first available ZIP with all conditions
+const pickAvailableZip = (zipRows) => {
+  const today = new Date();
+
+  for (let zipEntry of zipRows) {
+    //console.log("check");
+    const population = parseInt(zipEntry.population || "0", 10);
+    const noOfRecords = parseInt(zipEntry.no_of_records || "0", 10);
+
+    // Parse last_used date safely
+    const lastUsed = zipEntry.last_used ? new Date(zipEntry.last_used) : null;
+    const daysDiff = lastUsed
+      ? Math.floor((today - lastUsed) / (1000 * 60 * 60 * 24))
+      : Infinity; // if never used, treat as available
+    if (population > 30000 && noOfRecords < zip_limit && daysDiff >= 60) {
+      // Update values
+      zipEntry.population = (population + 1).toString();
+      zipEntry.no_of_records = (noOfRecords + 1).toString();
+      zipEntry.last_used = today.toISOString().split("T")[0]; // save as YYYY-MM-DD
+      return zipEntry.zip;
     }
-    return ""; // fallback if none available
-  };
+  }
+
+  return ""; // fallback if none available
+};
+
 
   // Process files and merge logic
   const processFiles = async () => {
@@ -135,10 +151,29 @@ function App() {
     const updatedMasterContent = buildCSV(masterHeaders, finalMasterRows, ",");
     setUpdatedMasterCSV(updatedMasterContent);
 
-    // Build updated uszips.csv (zip, population)
-    const zipHeaders = ["zip", "population"];
-    const updatedZipContent = buildCSV(zipHeaders, updatedZipRows, ",");
-    setUpdatedZipCSV(updatedZipContent);
+      // Build updated uszips.csv (zip, population)
+      const zipHeaders = ["zip", "population","no_of_records","last_used"];
+      const updatedZipContent = buildCSV(zipHeaders, updatedZipRows, ",");
+      setUpdatedZipCSV(updatedZipContent);
+      await fetch(`${backendUrl}/update/uszips`, {
+        method: "POST",
+        headers: { "Content-Type": "text/csv" },
+        body: updatedZipContent,
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert(data.message || "uszips.csv updated successfully");
+          } else {
+            alert(data.message || "Failed to update uszips.csv");
+          }
+        })
+        .catch(() => {
+          alert("Server error. Please refresh the page and try again.");
+        })
+        .finally(() => {
+          setProcessing(false);
+        });
 
     setProcessing(false);
   };
